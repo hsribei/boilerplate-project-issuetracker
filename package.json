@@ -5,7 +5,9 @@
   "description": "What am I about?",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "NODE_ENV=prod node server.js",
+    "develop": "NODE_ENV=dev nodemon --inspect server.js",
+    "test": "NODE_ENV=test nodemon --inspect server.js"
   },
   "dependencies": {
     "express": "^5.0.0-alpha.6",
@@ -26,5 +28,8 @@
     "url": "https://github.com/hsribei/fcc-project-api-issue-tracker"
   },
   "keywords": ["node", "hyperdev", "express"],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^1.17.2"
+  }
 }
