@@ -1,5 +1,6 @@
 {
-  "name": "my-hyperdev-app",
+  "author": "Helder S Ribeiro",
+  "name": "@hsribei/fcc-project-api-issue-tracker",
   "version": "0.0.1",
   "description": "What am I about?",
   "main": "server.js",
@@ -22,7 +23,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://hyperdev.com/#!/project/welcome-project"
+    "url": "https://github.com/hsribei/fcc-project-api-issue-tracker"
   },
   "keywords": ["node", "hyperdev", "express"],
   "license": "MIT"
