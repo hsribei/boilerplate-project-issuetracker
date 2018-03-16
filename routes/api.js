@@ -6,36 +6,31 @@
 *
 */
 
-'use strict';
+"use strict";
 
-var expect = require('chai').expect;
-var MongoClient = require('mongodb');
-var ObjectId = require('mongodb').ObjectID;
+var expect = require("chai").expect;
+var MongoClient = require("mongodb");
+var ObjectId = require("mongodb").ObjectID;
 
 const CONNECTION_STRING = process.env.DB; //MongoClient.connect(CONNECTION_STRING, function(err, db) {});
 
-module.exports = function (app) {
+module.exports = function(app) {
+  app
+    .route("/api/issues/:project")
 
-  app.route('/api/issues/:project')
-  
-    .get(function (req, res){
+    .get(function(req, res) {
       var project = req.params.project;
-      
     })
-    
-    .post(function (req, res){
+
+    .post(function(req, res) {
       var project = req.params.project;
-      
     })
-    
-    .put(function (req, res){
+
+    .put(function(req, res) {
       var project = req.params.project;
-      
     })
-    
-    .delete(function (req, res){
+
+    .delete(function(req, res) {
       var project = req.params.project;
-      
     });
-    
 };
