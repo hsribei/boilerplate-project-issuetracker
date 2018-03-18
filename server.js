@@ -2,7 +2,6 @@
 
 var express = require("express");
 var bodyParser = require("body-parser");
-var expect = require("chai").expect;
 var cors = require("cors");
 
 var apiRoutes = require("./routes/api.js");

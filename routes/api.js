@@ -8,7 +8,6 @@
 
 "use strict";
 
-var expect = require("chai").expect;
 var MongoClient = require("mongodb");
 var ObjectId = require("mongodb").ObjectID;
 
