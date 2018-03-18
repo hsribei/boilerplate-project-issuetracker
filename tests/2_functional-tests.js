@@ -16,8 +16,7 @@ chai.use(chaiHttp);
 // Return shallow copy of obj with only the properties specified in `keys`
 function pickKeys(obj, keys) {
   const filteredObj = {};
-  const fields = Object.keys(input);
-  fields.forEach(field => (filteredObj[field] = obj[field]));
+  keys.forEach(field => (filteredObj[field] = obj[field]));
   return filteredObj;
 }
 
@@ -27,10 +26,9 @@ suite("Functional Tests", function() {
     optional: ["assigned_to", "status_text"],
     generated: ["created_on", "updated_on", "open", "_id"]
   };
+  fields.all = [...fields.required, ...fields.optional, ...fields.generated];
 
   suite("POST /api/issues/{project} => object with issue data", function() {
-    fields.all = [...fields.required, ...fields.optional, ...fields.generated];
-
     test("Every field filled in", function(done) {
       const input = {
         issue_title: "Title",
@@ -47,7 +45,7 @@ suite("Functional Tests", function() {
         .end(function(err, res) {
           assert.strictEqual(res.status, 200);
           // Should echo the same field values that were in the user input...
-          assert.deepEqual(pickKeys(res.body), input);
+          assert.deepEqual(pickKeys(res.body, Object.keys(input)), input);
 
           // ...plus the generated fields.
           assert.containsAllKeys(res.body, fields.generated);
@@ -98,9 +96,9 @@ suite("Functional Tests", function() {
         .post("/api/issues/test")
         .send(input)
         .end(function(err, res) {
-          assert.isAtLeast(res.status, 400);
-          assert.isBelow(res.status, 500);
-          assert.strictEqual(res.body.text, "missing inputs");
+          assert.isAtLeast(err.status, 400);
+          assert.isBelow(err.status, 500);
+          assert.strictEqual(res.error.text, "missing inputs");
 
           done();
         });
