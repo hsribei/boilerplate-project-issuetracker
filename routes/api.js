@@ -6,12 +6,10 @@
 *
 */
 
-"use strict";
+const mongoose = require("mongoose");
+const ObjectId = require("mongodb").ObjectID;
 
-var MongoClient = require("mongodb");
-var ObjectId = require("mongodb").ObjectID;
-
-const CONNECTION_STRING = process.env.DB; //MongoClient.connect(CONNECTION_STRING, function(err, db) {});
+mongoose.connect(process.env.MONGO_URI);
 
 module.exports = function(app) {
   app
