@@ -10,6 +10,7 @@ var chaiHttp = require("chai-http");
 var chai = require("chai");
 var assert = chai.assert;
 var server = require("../server");
+const ObjectId = require("mongodb").ObjectID;
 
 chai.use(chaiHttp);
 
@@ -21,6 +22,7 @@ function pickKeys(obj, keys) {
 }
 
 suite("Functional Tests", function() {
+  this.timeout(50000);
   const fields = {
     required: ["issue_title", "issue_text", "created_by"],
     optional: ["assigned_to", "status_text"],
@@ -112,9 +114,9 @@ suite("Functional Tests", function() {
         .put("/api/issues/test")
         .send("")
         .end(function(err, res) {
-          assert.isAtLeast(res.status, 400);
-          assert.isBelow(res.status, 500);
-          assert.strictEqual(res.body.text, "no updated field sent");
+          assert.isAtLeast(err.status, 400);
+          assert.isBelow(err.status, 500);
+          assert.strictEqual(res.error.text, "no updated field sent");
 
           done();
         });
@@ -146,7 +148,7 @@ suite("Functional Tests", function() {
             })
             .end(function(putErr, putRes) {
               assert.strictEqual(putRes.status, 200);
-              assert.strictEqual(putRes.body.text, "successfully updated");
+              assert.strictEqual(putRes.text, "successfully updated");
 
               chai
                 .request(server)
@@ -213,7 +215,7 @@ suite("Functional Tests", function() {
             .send(desiredIssue)
             .end(function(putErr, putRes) {
               assert.strictEqual(putRes.status, 200);
-              assert.strictEqual(putRes.body.text, "successfully updated");
+              assert.strictEqual(putRes.text, "successfully updated");
 
               chai
                 .request(server)
@@ -221,7 +223,7 @@ suite("Functional Tests", function() {
                 .query({ _id: originalIssue._id })
                 .end(function(getErr, getRes) {
                   assert.strictEqual(getRes.status, 200);
-                  const updatedIssue = getRes.body;
+                  const updatedIssue = getRes.body[0];
 
                   Object.keys(input).forEach(key => {
                     assert.strictEqual(
@@ -309,7 +311,7 @@ suite("Functional Tests", function() {
         .end(function(err, res) {
           assert.isAtLeast(res.status, 400);
           assert.isBelow(res.status, 500);
-          assert.strictEqual(res.body.text, "_id error");
+          assert.strictEqual(res.text, "_id error");
 
           done();
         });
@@ -339,13 +341,41 @@ suite("Functional Tests", function() {
             .send({ _id: savedIssue._id })
             .end(function(deleteErr, deleteRes) {
               assert.strictEqual(deleteRes.status, 200);
-              assert.strictEqual(
-                deleteRes.body.text,
-                "deleted " + savedIssue._id
-              );
+              assert.strictEqual(deleteRes.text, "deleted " + savedIssue._id);
 
               done();
             });
+        });
+    });
+
+    test("Malformed _id", function(done) {
+      const _id = "breaks new ObjectId()";
+      chai
+        .request(server)
+        .delete("/api/issues/test")
+        .send({ _id })
+        .end(function(err, res) {
+          assert.isAtLeast(res.status, 400);
+          assert.isBelow(res.status, 500);
+          assert.strictEqual(res.text, "could not delete " + _id);
+
+          done();
+        });
+    });
+
+    test("Well-formed, inexistent _id", function(done) {
+      const _id = new ObjectId();
+      console.log(_id);
+      chai
+        .request(server)
+        .delete("/api/issues/test")
+        .send({ _id })
+        .end(function(err, res) {
+          assert.isAtLeast(res.status, 400);
+          assert.isBelow(res.status, 500);
+          assert.strictEqual(res.text, "could not delete " + _id);
+
+          done();
         });
     });
   });
