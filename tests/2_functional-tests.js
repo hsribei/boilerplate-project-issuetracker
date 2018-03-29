@@ -239,11 +239,76 @@ suite("Functional Tests", function() {
             });
         });
     });
+
+    test("Try to update correct id, wrong project name", function(done) {
+      const input = {
+        issue_title: "This PUT should fail",
+        issue_text: "All api verbs should be scoped by project",
+        created_by: "PUT is no different",
+        assigned_to: "This tests that",
+        status_text: "by first POSTing to /test, then PUTting to /wrong-project"
+      };
+
+      chai
+        .request(server)
+        .post("/api/issues/test")
+        .send(input)
+        .end(function(errPost, resPost) {
+          assert.strictEqual(resPost.status, 200);
+          assert.strictEqual(resPost.body.open, true);
+
+          const originalIssue = resPost.body;
+
+          const desiredIssue = {
+            ...originalIssue,
+            issue_title: "This update will fail"
+          };
+
+          chai
+            .request(server)
+            .put("/api/issues/wrong-project")
+            .send(desiredIssue)
+            .end(function(putErr, putRes) {
+              assert.isAtLeast(putRes.status, 400);
+              assert.isBelow(putRes.status, 500);
+
+              chai
+                .request(server)
+                .get("/api/issues/test")
+                .query({ _id: originalIssue._id })
+                .end(function(getErr, getRes) {
+                  assert.strictEqual(getRes.status, 200);
+                  const nonUpdatedIssue = getRes.body[0];
+
+                  assert.strictEqual(
+                    nonUpdatedIssue.issue_title,
+                    input.issue_title
+                  );
+
+                  done();
+                });
+            });
+        });
+    });
   });
 
   suite(
     "GET /api/issues/{project} => Array of objects with issue data",
     function() {
+      test("Empty project", function(done) {
+        chai
+          .request(server)
+          .get("/api/issues/empty-project")
+          .query({})
+          .end(function(err, res) {
+            assert.strictEqual(res.status, 200);
+            assert.isArray(res.body);
+            assert.strictEqual(res.body.length, 0);
+
+            done();
+          });
+      });
+
       test("No filter", function(done) {
         chai
           .request(server)
@@ -252,6 +317,7 @@ suite("Functional Tests", function() {
           .end(function(err, res) {
             assert.strictEqual(res.status, 200);
             assert.isArray(res.body);
+            assert.isAtLeast(res.body.length, 1);
 
             res.body.forEach(issue => {
               assert.containsAllKeys(issue, fields.all);
@@ -320,11 +386,11 @@ suite("Functional Tests", function() {
     // POST to create, DELETE to delete, GET to assert deletion worked
     test("Valid _id", function(done) {
       const input = {
-        issue_title: "multiple fields to update",
-        issue_text: "this will all become uppercase when the put lands",
-        created_by: "a martian",
-        assigned_to: "an earthling",
-        status_text: "beep bop"
+        issue_title: "issue_title",
+        issue_text: "issue_text",
+        created_by: "created_by",
+        assigned_to: "assigned_to",
+        status_text: "status_text"
       };
 
       chai
@@ -342,6 +408,40 @@ suite("Functional Tests", function() {
             .end(function(deleteErr, deleteRes) {
               assert.strictEqual(deleteRes.status, 200);
               assert.strictEqual(deleteRes.text, "deleted " + savedIssue._id);
+
+              done();
+            });
+        });
+    });
+
+    test("Valid _id, wrong project", function(done) {
+      const input = {
+        issue_title: "issue_title",
+        issue_text: "issue_text",
+        created_by: "created_by",
+        assigned_to: "assigned_to",
+        status_text: "status_text"
+      };
+
+      chai
+        .request(server)
+        .post("/api/issues/test")
+        .send(input)
+        .end(function(postErr, postRes) {
+          assert.strictEqual(postRes.status, 200);
+          const savedIssue = postRes.body;
+
+          chai
+            .request(server)
+            .delete("/api/issues/wrong-project")
+            .send({ _id: savedIssue._id })
+            .end(function(deleteErr, deleteRes) {
+              assert.isAtLeast(deleteRes.status, 400);
+              assert.isBelow(deleteRes.status, 500);
+              assert.strictEqual(
+                deleteRes.text,
+                "could not delete " + savedIssue._id
+              );
 
               done();
             });

@@ -32,6 +32,7 @@ const Schema = mongoose.Schema;
 
 const issueSchema = new Schema(
   {
+    project: { type: String, required: true },
     issue_title: { type: String, required: true },
     issue_text: { type: String, required: true },
     created_by: { type: String, required: true },
@@ -56,7 +57,7 @@ module.exports = function(app) {
       if (dbQueryConditions._id) {
         dbQueryConditions._id = new ObjectId(dbQueryConditions._id);
       }
-      // TODO add `project` to the query
+      dbQueryConditions.project = project;
       Issue.find(dbQueryConditions, (err, results) => {
         if (err) {
           res.status(500).send(err.name + " " + err.message);
@@ -68,7 +69,7 @@ module.exports = function(app) {
 
     .post(function(req, res) {
       const project = req.params.project;
-      const newIssue = new Issue(req.body);
+      const newIssue = new Issue(Object.assign({}, { project }, req.body));
       newIssue.save((err, savedIssue) => {
         if (err) {
           if (err.name === "ValidationError") {
@@ -87,22 +88,25 @@ module.exports = function(app) {
       if (isEmpty(req.body) || isEqual(Object.keys(req.body), ["_id"])) {
         res.status(400).send("no updated field sent");
       } else {
-        Issue.findById(new ObjectId(req.body._id), (err, issue) => {
-          if (err) {
-            res.status(500).send(err.name + " " + err.message);
-          } else if (!issue) {
-            res.status(400).send("could not update " + req.body._id);
-          } else {
-            issue.set(omit(req.body, "_id"));
-            issue.save((err, updatedIssue) => {
-              if (err) {
-                res.status(500).send(err.name + " " + err.message);
-              } else {
-                res.status(200).send("successfully updated");
-              }
-            });
+        Issue.findOne(
+          { _id: new ObjectId(req.body._id), project },
+          (err, issue) => {
+            if (err) {
+              res.status(500).send(err.name + " " + err.message);
+            } else if (!issue) {
+              res.status(400).send("could not update " + req.body._id);
+            } else {
+              issue.set(omit(req.body, "_id"));
+              issue.save((err, updatedIssue) => {
+                if (err) {
+                  res.status(500).send(err.name + " " + err.message);
+                } else {
+                  res.status(200).send("successfully updated");
+                }
+              });
+            }
           }
-        });
+        );
       }
     })
 
@@ -117,7 +121,7 @@ module.exports = function(app) {
           return;
         }
 
-        Issue.deleteOne({ _id }, (err, writeOpResult) => {
+        Issue.deleteOne({ _id, project }, (err, writeOpResult) => {
           if (err) {
             console.error(err);
             res.status(500).send(err.name + " " + err.message);
